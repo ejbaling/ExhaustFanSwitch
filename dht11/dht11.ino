@@ -6,6 +6,8 @@
  * Rewritten by https://github.com/phawxby
  */
 int dht11pin = A0;
+static const unsigned long MAX_SWITCH_ON_TIME = 300000; // 5 minutes
+static const int MAX_HUMIDITY = 32; // Ideal (40-60) percent 
 
 void setup(){
   Serial.begin(9600);
@@ -38,6 +40,10 @@ void loop(){
        Serial.print(".");
        Serial.print(dhtData[4], DEC);
        Serial.println("C");
+
+       if (dhtData[1] > MAX_HUMIDITY)
+          SwitchOn();
+          
     break;
     case 1:
       Serial.println("Error 1: DHT start condition 1 not met.");
@@ -53,8 +59,8 @@ void loop(){
       break;
   }
 
-  // Read the temperature every 1 second
-  delay(1000);
+  // Read the temperature every 5 seconds
+  delay(5000);
 }
 
 void ReadDHT11(int pin, byte* output)
@@ -143,3 +149,15 @@ byte ReadDHT11Pin(int pin){
   
   return result;
 }
+
+void SwitchOn() {
+  Serial.println("Switched on.");
+  delay(MAX_SWITCH_ON_TIME);
+  SwitchOff();
+}
+
+void SwitchOff() {
+  Serial.println("Switched off.");
+  delay(20000);
+}
+
