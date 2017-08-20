@@ -5,14 +5,27 @@
  * Sample code: http://kookye.com/wp-content/uploads/samplecode/dht11.txt
  * Rewritten by https://github.com/phawxby
  */
+
+// include the library code:
+#include <LiquidCrystal.h>
+
 int dht11pin = A0;
 static const unsigned long MAX_SWITCH_ON_TIME = 300000; // 5 minutes
-static const int MAX_HUMIDITY = 32; // Ideal (40-60) percent 
+static const int MAX_HUMIDITY = 50; // Ideal (40-60) percent
+
+#define RELAY1 7
+#define DEBUG false
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(0, 1, 2, 3, 4, 5);
 
 void setup(){
-  Serial.begin(9600);
+  if (DEBUG)
+    Serial.begin(9600);
+  else
+    lcd.begin(16, 2);
+  pinMode(RELAY1, OUTPUT);
   delay(300);
-  Serial.println("Humidity and temperature");
   delay(700);
 }
 
@@ -30,37 +43,39 @@ void loop(){
 
   switch (dhtData[0]){
     case 0:
-       Serial.print("Current humdity = ");
-       Serial.print(dhtData[1], DEC);
-       Serial.print(".");
-       Serial.print(dhtData[2], DEC);
-       Serial.print("%  ");
-       Serial.print("temperature = ");
-       Serial.print(dhtData[3], DEC);
-       Serial.print(".");
-       Serial.print(dhtData[4], DEC);
-       Serial.println("C");
+       lcd.setCursor(0, 0);
+       Print("Humidity = ");
+       Print(dhtData[1]);
+       Print(".");
+       Print(dhtData[2]);
+       Print("%  ");
+       lcd.setCursor(0, 1);
+       Print("Temp = ");
+       Print(dhtData[3]);
+       Print(".");
+       Print(dhtData[4]);
+       PrintLn("C");
 
        if (dhtData[1] > MAX_HUMIDITY)
           SwitchOn();
           
     break;
     case 1:
-      Serial.println("Error 1: DHT start condition 1 not met.");
+      PrintError("Error 1: DHT start condition 1 not met.");
       break;
     case 2:
-      Serial.println("Error 2: DHT start condition 2 not met.");
+      PrintError("Error 2: DHT start condition 2 not met.");
       break;
     case 3:
-      Serial.println("Error 3: DHT checksum error.");
+      PrintError("Error 3: DHT checksum error.");
       break;
     default:
-      Serial.println("Error: Unrecognized code encountered.");
+      PrintError("Error: Unrecognized code encountered.");
       break;
   }
 
   // Read the temperature every 5 seconds
-  delay(5000);
+  delay(2000);
 }
 
 void ReadDHT11(int pin, byte* output)
@@ -151,13 +166,46 @@ byte ReadDHT11Pin(int pin){
 }
 
 void SwitchOn() {
-  Serial.println("Switched on.");
+  digitalWrite(RELAY1, HIGH);
+  PrintLn("Switched on.");
   delay(MAX_SWITCH_ON_TIME);
   SwitchOff();
 }
 
 void SwitchOff() {
-  Serial.println("Switched off.");
+  digitalWrite(RELAY1, LOW);
+  PrintLn("Switched off.");
   delay(20000);
+}
+
+void PrintLn(const char* input) {
+  if (DEBUG) {
+    Serial.println(input);
+    return;
+  }
+  lcd.print(input);
+}
+
+void Print(const char* input) {
+  if (DEBUG) {
+    Serial.print(input);
+    return;
+  }
+  lcd.print(input);
+}
+
+void Print(byte input) {
+  if (DEBUG) {
+    Serial.print(input, DEC);
+    return;
+  }
+  lcd.print(input, DEC);
+}
+
+void PrintError(const char* error) {
+  if (!DEBUG)
+    return;
+  Serial.println(error);
+  return;
 }
 
